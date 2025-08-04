@@ -1,0 +1,27 @@
+[project]
+name = "async-bash-mcp"
+version = "0.1.0"
+description = "A robust subprocess execution MCP"
+readme = "README.md"
+authors = [
+    { name = "Huw Percival", email = "huwpercival@xmos.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "mcp>=1.12.3",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-asyncio>=0.21.0",
+    "ruff",
+]
+
+[project.scripts]
+async-bash-mcp = "async_bash_mcp:main"
+async_bash_mcp = "async_bash_mcp:main"
+
+[build-system]
+requires = ["uv_build>=0.8.3,<0.9.0"]
+build-backend = "uv_build"
