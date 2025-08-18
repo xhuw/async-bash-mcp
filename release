@@ -1,10 +1,11 @@
 #! /usr/bin/env bash
 
 set -ex
+uv version --bump $1
+uv lock
+VERSION=$(uv version --short)
 
-VERSION=$(uv version --bump $1)
-
-git commit pyproject.toml -m "Bump version to $VERSION"
+git commit uv.lock pyproject.toml -m "Bump version to $VERSION"
 
 git tag -a "v$VERSION" -m "Release version $VERSION"
 
