@@ -3,6 +3,7 @@ name = "async-bash-mcp"
 version = "0.1.2"
 description = "A robust subprocess execution MCP"
 readme = "README.md"
+homepage = "https://github.com/xhuw/async-bash-mcp"
 authors = [
     { name = "Huw Percival", email = "huw.percival@gmail.com" }
 ]

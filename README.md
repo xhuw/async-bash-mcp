@@ -1,32 +1,50 @@
-# MCP spawning and managing bash tasks
+# async-bash-mcp
 
-tools provided:
+[![pypi](https://img.shields.io/pypi/v/async-bash-mcp)](https://pypi.org/project/async-bash-mcp/) [![Test](https://github.com/xhuw/async-bash-mcp/actions/workflows/test.yaml/badge.svg)](https://github.com/xhuw/async-bash-mcp/actions/workflows/test.yaml)
 
-1. spawn : lauch a command
-  - parameters:
-    - command: str, the bash command to run
-    - cwd: str, optional path to the cwd to use.
-  - Spawns a bash command in a subshell asynchronously, returns a ID (int) of the newly launched task
-2. list :
-  - parameters: none
-  - Returns a list of the currently running processes each is a dictionary of `[{"ID": int, "command": str, "done": bool}]`.
-          Tasks will be removed from the list when their result has been accessed via `wait` or `poll`
-3. poll, check the progress of a task
-  - parameters: `ID: int` the command to check, `wait: int` wait for the process to finish executing or for `wait` ms to elapse. `terminate: bool = false` an optional parameter which triggers the command to be terminated with SIG_TERM before returning the command results
-  - If poll is executed multiple times for a single process it will only return the stdout and stderr that was produced since the last call to poll (no duplicate outputs)
-  - returns dictionary `{"stdout": str, "stderr": str, "elapsedTime": float, "finished": bool, "exitCode": int}` exitCode will only be present if `finished` is true. elapsedTime will be the number of milliseconds since the command started.
+An MCP server for spawning and managing bash commands asynchronously. Run multiple shell commands in parallel and check their progress independently.
 
-## Requirements
+## Usage with opencode
 
-1. Must support multiple concurrent clients
-2. Each tool must have a description which is well designed to be consumed by an LLM
-3. Results should be presented in a format which is suitable for and LLM
-4. Uses the users default shell (bash, zsh, fish)
+Add to your `opencode.json` config:
 
-## launching the MCP
-
-This MCP is launched with `uv` via
-
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "async-bash": {
+      "type": "local",
+      "command": ["uvx", "async-bash-mcp"],
+      "enabled": true
+    }
+  }
+}
 ```
+
+Then use commands like:
+- "Spawn a long-running build in the background"
+- "Run tests in parallel and show me the results"
+- "Start a server and tell me when it's ready"
+
+## Tools
+
+**spawn** - Launch a bash command asynchronously
+- `command` (str): The bash command to run
+- `cwd` (str, optional): Working directory path
+- Returns a process ID for tracking
+
+**list_processes** - Show all running/recent processes
+- No parameters
+- Returns array of `{"ID": int, "command": str, "done": bool}`
+
+**poll** - Check progress of a spawned process
+- `process_id` (int): ID from spawn command
+- `wait` (int): Wait time in milliseconds
+- `terminate` (bool, optional): Kill process before returning results
+- Returns `{"stdout": str, "stderr": str, "elapsedTime": float, "finished": bool, "exitCode": int}`
+
+## Installation
+
+```bash
 uvx async-bash-mcp
 ```
