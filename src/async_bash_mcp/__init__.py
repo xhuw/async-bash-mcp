@@ -219,8 +219,6 @@ class ProcessManager:
             process_info.stdout_position = len(process_info.stdout_buffer)
             process_info.stderr_position = len(process_info.stderr_buffer)
 
-            # Mark as accessed
-            process_info.accessed = True
 
             elapsed_time = (time.time() - process_info.start_time) * 1000
 
@@ -232,6 +230,10 @@ class ProcessManager:
             }
 
             if process_info.finished:
+                # Mark as accessed
+                process_info.accessed = True
+                process_info.stdout_buffer = ""
+                process_info.stderr_buffer = ""
                 result["exitCode"] = process_info.exit_code
 
             return result
@@ -310,6 +312,16 @@ async def spawn(
     Launch a bash command asynchronously in a subshell.
 
     Returns a unique process ID that can be used to check progress with the poll tool. **ALWAYS POLL THE PROCESS AFTER SPAWNING**.
+
+    Multiple commands can be spawned in parallel and independently polled. If the task requires running independent bash commands, run them in parrallel.
+
+    Example:
+
+        1. User requests the results of `test a` and `test b`
+        2. spawn `test a`
+        3. spawn `test b`
+        4. while test a is running: poll test a
+        5. while test b is running: poll test b
 
     Args:
         command: The bash command to execute
