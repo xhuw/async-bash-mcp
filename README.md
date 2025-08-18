@@ -28,5 +28,5 @@ tools provided:
 This MCP is launched with `uv` via
 
 ```
-uv run async-bash-mcp
+uvx async-bash-mcp
 ```
