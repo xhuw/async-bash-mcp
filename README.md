@@ -26,6 +26,24 @@ Then use commands like:
 - "Run tests in parallel and show me the results"
 - "Start a server and tell me when it's ready"
 
+## Why async bash?
+
+When working with long-running commands like builds, tests, or servers, the agent needs to:
+- Monitor progress incrementally without committing to a fixed timeout
+- Run multiple commands in parallel and check each independently  
+- Make decisions about continuing or terminating based on partial output
+- Process real-time feedback as commands generate output
+
+This tool provides the agent with better information for decision-making, leading to faster task completion and fewer confused responses.
+
+**Key advantages over the built-in bash tool:**
+- **Better decision making**: Agents can see partial output and make informed choices about continuing or terminating
+- **Parallel execution**: Run multiple commands simultaneously
+- **No timeout guessing**: Check progress incrementally instead of setting timeouts upfront
+- **Faster iterations**: No waiting for arbitrary timeouts when errors are already visible
+
+This tool is designed to replace opencode's bash tool for any scenario involving potentially long-running commands, giving agents the information they need to make better decisions and save you time.
+
 ## Tools
 
 **spawn** - Launch a bash command asynchronously
