@@ -6,11 +6,14 @@ An MCP server for spawning and managing bash commands asynchronously. Run multip
 
 ## Usage with opencode
 
-Add to your `opencode.json` config:
+Add to your `opencode.json` config to replace the bash tool with async-bash-mcp:
 
 ```json
 {
   "$schema": "https://opencode.ai/config.json",
+  "tools": {
+    "bash": false
+  },
   "mcp": {
     "async-bash": {
       "type": "local",
@@ -30,7 +33,7 @@ Then use commands like:
 
 When working with long-running commands like builds, tests, or servers, the agent needs to:
 - Monitor progress incrementally without committing to a fixed timeout
-- Run multiple commands in parallel and check each independently  
+- Run multiple commands in parallel and check each independently
 - Make decisions about continuing or terminating based on partial output
 - Process real-time feedback as commands generate output
 
