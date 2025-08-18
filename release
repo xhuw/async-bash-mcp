@@ -9,4 +9,5 @@ git commit uv.lock pyproject.toml -m "Bump version to $VERSION"
 
 git tag -a "v$VERSION" -m "Release version $VERSION"
 
-git push --all
+git push
+git push --tags
