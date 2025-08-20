@@ -1,6 +1,8 @@
 import asyncio
 import os
 import time
+import logging
+from platformdirs import user_log_dir
 from contextlib import asynccontextmanager
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Union
@@ -219,7 +221,6 @@ class ProcessManager:
             process_info.stdout_position = len(process_info.stdout_buffer)
             process_info.stderr_position = len(process_info.stderr_buffer)
 
-
             elapsed_time = (time.time() - process_info.start_time) * 1000
 
             result = {
@@ -302,6 +303,12 @@ async def lifespan(app):
 
 # Create FastMCP server
 mcp = FastMCP("async-bash-mcp", lifespan=lifespan)
+root_log = logging.getLogger()
+log_dir = Path(user_log_dir("async_bash_mcp", ""))
+log_dir.mkdir(parents=True, exist_ok=True)
+handler = logging.FileHandler(log_dir / "log.log")
+root_log.addHandler(handler)
+logger = logging.getLogger("async_bash_mcp")
 
 
 @mcp.tool()
@@ -330,8 +337,18 @@ async def spawn(
     Returns:
         SpawnResult with the unique process ID
     """
+
+    progress_token = (
+        ctx.request_context.meta.progressToken if ctx.request_context.meta else None
+    )
+    logger.info(
+        f"Spawning process for client {ctx.client_id} with command: {command}, cwd: {cwd}, progress token: {progress_token}"
+    )
+    progress_message = (cwd or "") + "$ " + command
+    await ctx.report_progress(0, message=progress_message)
     pm = get_client_process_manager(ctx.client_id)
     process_id = await pm.spawn_process(command, cwd)
+    await ctx.report_progress(1, message=progress_message)
     return SpawnResult(id=process_id)
 
 

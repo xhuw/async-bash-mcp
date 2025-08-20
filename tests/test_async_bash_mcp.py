@@ -15,11 +15,21 @@ from async_bash_mcp import (
 )
 
 
+class MockRequestContext:
+    def __init__(self):
+        self.meta = None
+
+
 class MockContext:
     def __init__(self, client_id=None):
         if client_id is None:
             client_id = str(uuid.uuid4())  # Generate unique client ID
         self.client_id = client_id
+        self.request_context = MockRequestContext()
+
+    async def report_progress(self, progress, message=None):
+        """Mock progress reporting method"""
+        pass
 
 
 @pytest.fixture

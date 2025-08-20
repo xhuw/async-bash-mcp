@@ -10,6 +10,7 @@ authors = [
 requires-python = ">=3.13"
 dependencies = [
     "mcp>=1.12.3",
+    "platformdirs>=4.3.8",
 ]
 
 [project.optional-dependencies]
