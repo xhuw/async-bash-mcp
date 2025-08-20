@@ -1,6 +1,6 @@
 [project]
 name = "async-bash-mcp"
-version = "0.1.4"
+version = "0.1.5"
 description = "A robust subprocess execution MCP"
 readme = "README.md"
 homepage = "https://github.com/xhuw/async-bash-mcp"
