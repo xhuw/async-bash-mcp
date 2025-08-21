@@ -31,6 +31,14 @@ class ProcessInfo:
     finished: bool = False
     exit_code: Optional[int] = None
 
+def str_last_n_lines(string, n):
+    # iterate backwards through the string to find the Nth last \n
+    found_lines = 0
+    for i in range(len(string) - 1, -1, -1):
+        if string[i] == '\n':
+            found_lines += 1
+        if found_lines == n:
+            return string[i + 1:]  # return the substring after the Nth last \n
 
 class ProcessManager:
     # Global counter for unique process IDs across all sessions
@@ -179,9 +187,38 @@ class ProcessManager:
                 for proc in self._processes.values()
             ]
 
+    async def _emit_progress(self, process_id, progress_callback, elapsed):
+        with self._lock:
+            proc = self._processes.get(process_id)
+            if not proc:
+                return
+            # diabolically inefficient...
+            stdout = str_last_n_lines(proc.stdout_buffer, 5)
+            stderr = str_last_n_lines(proc.stderr_buffer, 5)
+            message = f"# `$ {proc.command}` \n\n## stdout\n\n```\n{stdout}\n```\n\n## stderr\n\n```\n{stderr}\n```\n"
+        await progress_callback(round(1000*elapsed), message)
+
+    async def _poll_progress(self, process_id, progress_callback):
+        elapsed = 0
+        period = 0.3
+        while True:
+            try:
+                await self._emit_progress(process_id, progress_callback, elapsed)
+                await asyncio.sleep(period)
+            except asyncio.CancelledError:
+                return
+            elapsed += period
+
+
     async def poll_process(
-        self, process_id: int, wait_ms: int = 0, terminate: bool = False
+        self, process_id: int, wait_ms: int = 0, terminate: bool = False, progress_callback=None
     ) -> Dict[str, Union[str, float, bool, int]]:
+        if progress_callback is None:
+            # Default no-op progress callback
+            async def default_progress_callback(elapsed_ms, message):
+                pass
+            progress_callback = default_progress_callback
+
         with self._lock:
             if process_id not in self._processes:
                 raise ValueError(f"Process {process_id} not found")
@@ -205,12 +242,20 @@ class ProcessManager:
 
         # Wait for specified time or process completion
         if wait_ms > 0 and not process_info.finished:
+            progress = asyncio.create_task(self._poll_progress(
+                process_id, progress_callback
+            ))
             try:
                 await asyncio.wait_for(
                     self._wait_for_finish(process_info), timeout=wait_ms / 1000.0
                 )
             except asyncio.TimeoutError:
                 pass
+            finally:
+                progress.cancel()
+                await progress
+                await self._emit_progress(process_id, progress_callback, wait_ms)
+
 
         with self._lock:
             # Get new output since last poll
@@ -389,9 +434,17 @@ async def poll(
     """
     if wait <= 0:
         raise ValueError("Wait time must be greater than 0 milliseconds")
+
+    async def progress_callback(elapsed_ms, message):
+        try:
+            await ctx.report_progress(progress=elapsed_ms, total=wait, message=message)
+        except Exception:
+            # Connection closed or other error, ignore
+            pass
+
     pm = get_client_process_manager(ctx.client_id)
     try:
-        result = await pm.poll_process(process_id, wait, terminate)
+        result = await pm.poll_process(process_id, wait, terminate, progress_callback)
         return PollResult(**result)
     except ValueError as e:
         raise ValueError(str(e))
